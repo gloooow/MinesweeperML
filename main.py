@@ -4,65 +4,84 @@ import time
 import cv2
 import pyautogui
 
-now = time.time()
+base = 'img/'
 
-while(True):
-    prtscr = np.array(ImageGrab.grab(bbox=(0,0,160,250), ))
-    threshold = .9
+cells = {
+    1: {
+        'first': '1.png',
+        'second': (0, 0, 255),
+    },
+    2: {
+        'first': '2.png',
+        'second': (0, 255, 0),
+    },
+    3: {
+        'first': '3.png',
+        'second': (255, 0, 0),
+    },
+    4: {
+        'first': 'cell.png',
+        'second': (0, 0, 0),
+    },
+    5: {
+        'first': 'empty_down.png',
+        'second': (255, 255, 255),
+    },
+    6: {
+        'first': 'empty.png',
+        'second': (255, 255, 255),
+    },
+    7: {
+        'first': 'empty_right.png',
+        'second': (255, 255, 255),
+    },
+    8: {
+        'first': 'empty_corner.png',
+        'second': (255, 255, 255),
+    },
+    9: {
+        'first': 'happy.png',
+        'second': (0, 255, 255),
+    },
+    10: {
+        'first': 'sad.png',
+        'second': (255, 0, 255),
+    },
+}
 
-    cell_template = cv2.imread('img/cell.png')
-    cell_w, cell_h = cell_template.shape[:-1]
-    cell_res = cv2.matchTemplate(prtscr, cell_template, cv2.TM_CCOEFF_NORMED)
-    cell_loc = np.where(cell_res >= threshold)
-    for pt in zip(*cell_loc[::-1]):  # Switch collumns and rows
-        cv2.rectangle(prtscr, pt, (pt[0] + cell_w, pt[1] + cell_h), (0, 0, 0), 1)
+def take_screen_shot():
+    # 800x600 windowed mode
+    screen = np.array(ImageGrab.grab(bbox=(0,0,150,250)))
+    return screen
 
-    empty_template = cv2.imread('img/empty.png')
-    empty_w, empty_h = empty_template.shape[:-1]
-    empty_res = cv2.matchTemplate(prtscr, empty_template, cv2.TM_CCOEFF_NORMED)
-    empty_loc = np.where(empty_res >= threshold)
-    for pt in zip(*empty_loc[::-1]):  # Switch collumns and rows
-        cv2.rectangle(prtscr, pt, (pt[0] + empty_w, pt[1] + empty_h), (0, 255, 255), 1)
+def process_img(original_image):
+    processed_img = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
+    for number in cells.values():
+        template = cv2.imread(base + number['first'])
+        w, h = template.shape[:-1]
+        res = cv2.matchTemplate(processed_img,template,cv2.TM_CCOEFF_NORMED)
+        threshold = 0.9
+        loc = np.where( res >= threshold)
+        for pt in zip(*loc[::-1]):
+            xOffset, yOffset = 0, 0
+            if(number['first'] == 'cell.png' or number['first'] == 'empty.png' or number['first'] == 'empty_corner.png' or number['first'] == 'empty_down.png' or number['first'] == 'empty_right.png'):
+                xOffset, yOffset = 1, 1
+            cv2.rectangle(processed_img, (pt[0] + xOffset, pt[1] + yOffset), (pt[0] + w - xOffset - 1, pt[1] + h - yOffset - 1), number['second'])
     
-    empty_down_template = cv2.imread('img/empty_down.png')
-    empty_down_w, empty_down_h = empty_down_template.shape[:-1]
-    empty_down_res = cv2.matchTemplate(prtscr, empty_down_template, cv2.TM_CCOEFF_NORMED)
-    empty_down_loc = np.where(empty_down_res >= threshold)
-    for pt in zip(*empty_down_loc[::-1]):  # Switch collumns and rows
-        cv2.rectangle(prtscr, pt, (pt[0] + empty_down_w, pt[1] + empty_down_h), (0, 255, 255), 1)
+    return processed_img
 
-    one_template = cv2.imread('img/1.png')
-    one_template = cv2.cvtColor(one_template, cv2.COLOR_BGR2RGB)
-    one_w, one_h = one_template.shape[:-1]
-    one_res = cv2.matchTemplate(prtscr, one_template, cv2.TM_CCOEFF_NORMED)
-    one_loc = np.where(one_res >= threshold)
-    for pt in zip(*one_loc[::-1]):  # Switch collumns and rows
-        cv2.rectangle(prtscr, pt, (pt[0] + one_w, pt[1] + one_h), (0, 0, 255), 3)
+def main():
+    last_time = time.time()
+    while(True):
+        screen = take_screen_shot()
+        new_screen = process_img(screen)
+        # print('Loop took {} seconds'.format(time.time()-last_time))
+        last_time = time.time()
+        cv2.imshow('window', new_screen)
+        if cv2.waitKey(25) & 0xFF == ord('q'):
+            cv2.destroyAllWindows()
+            break
 
-    two_template = cv2.imread('img/2.png')
-    two_template = cv2.cvtColor(two_template, cv2.COLOR_BGR2RGB)
-    two_w, two_h = two_template.shape[:-1]
-    two_res = cv2.matchTemplate(prtscr, two_template, cv2.TM_CCOEFF_NORMED)
-    two_loc = np.where(two_res >= threshold)
-    for pt in zip(*two_loc[::-1]):  # Switch collumns and rows
-        cv2.rectangle(prtscr, pt, (pt[0] + two_w, pt[1] + two_h), (0, 255, 0), 1)
+if __name__ == '__main__':
+    main()
 
-    three_template = cv2.imread('img/3.png')
-    three_template = cv2.cvtColor(three_template, cv2.COLOR_BGR2RGB)
-    three_w, three_h = three_template.shape[:-1]
-    three_res = cv2.matchTemplate(prtscr, three_template, cv2.TM_CCOEFF_NORMED)
-    three_loc = np.where(three_res >= threshold)
-    for pt in zip(*three_loc[::-1]):  # Switch collumns and rows
-        cv2.rectangle(prtscr, pt, (pt[0] + three_w, pt[1] + three_h), (255, 0, 0), 1)
-
-    cv2.imwrite('result.png', prtscr)
-
-
-    # print('Loop took {} seconds'.format(time.time()-now))
-    now = time.time()
-    cv2.imshow('window',cv2.cvtColor(prtscr, cv2.COLOR_BGR2RGB))
-    # cv2.imshow('window',prtscr)
-
-    if cv2.waitKey(25) & 0xFF == ord('q'):
-        cv2.destroyAllWindows()
-        break
