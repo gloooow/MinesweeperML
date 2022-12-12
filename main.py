@@ -89,7 +89,6 @@ def process_img(original_image):
             cv2.rectangle(processed_img, (pt[0] + xOffset, pt[1] + yOffset), (pt[0] + w - xOffset - 1, pt[1] + h - yOffset - 1), number['second'])
             if(number['first'] != 'happy.png' and number['first'] != 'sad.png'):
                 map_cells_to_matrix((pt), number['third'])
-    print(position_matrix)
     return processed_img
 
 def main():
@@ -106,14 +105,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    # pyautogui.moveTo(122 + 6 + 7, 165 + 49 + 7, duration=1)
-    # while True:
-    #     print(pyautogui.position())
-    #     time.sleep(1)
-
-    # while True:
-    #     pyautogui.moveTo(6, 49)
-    #     time.sleep(1)
-    #     pyautogui.moveTo(145, 231)
-    #     time.sleep(1)
-
