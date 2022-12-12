@@ -100,16 +100,16 @@ class Minesweeper:
                 cv2.rectangle(processed_img, (pt[0] + xOffset, pt[1] + yOffset), (pt[0] + w - xOffset - 1, pt[1] + h - yOffset - 1), number['second'])
                 if(number['first'] != 'happy.png' and number['first'] != 'sad.png'):
                     self.map_cells_to_matrix((pt), number['third'])
-
-                    return 10, number['first'] == 'sad.png', self.score
+                    self.score += 1
                 elif(number['first'] == 'sad.png'):
                     self.score = 0
                     self.reset_point = pt
                     self.reset_game()
-                    return -10, number['first'] == 'sad.png', self.score
         return processed_img
 
     def move_cursor(self, direction):
+        reward = 0
+        check_game_over = False
         if direction == [1, 0, 0, 0, 0]:
             if(self.cursorPosition_x > 0):
                 self.cursorPosition_x -= 1
@@ -128,17 +128,29 @@ class Minesweeper:
                 pyautogui.moveTo(self.matrix[self.cursorPosition_x][self.cursorPosition_y]['second'][0] + 10, self.matrix[self.cursorPosition_x][self.cursorPosition_y]['second'][1] + 53)
         elif direction == [0, 0, 0, 0, 1]:
             pyautogui.click()
+            check_game_over = self.matrix[self.cursorPosition_x][self.cursorPosition_y]['first'] == -9
+            if(check_game_over):
+                reward = -10
+                print('game over')
+                self.score = 0
+                self.reset_game()
+            elif(self.matrix[self.cursorPosition_x][self.cursorPosition_y]['first'] == 0):
+                print('good choice')
+                reward = 10
+        return reward, check_game_over, self.score
 
     def main(self):
-        print('un ok')
-        last_time = time.time()
         # while(True):
         screen = self.take_screen_shot()
         new_screen = self.process_img(screen)
         # print('Loop took {} seconds'.format(time.time()-last_time))
-        last_time = time.time()
         if(self.ok):
-            pyautogui.moveTo(self.matrix[self.cursorPosition_x][self.cursorPosition_y]['second'][0] + 10, self.matrix[self.cursorPosition_x][self.cursorPosition_y]['second'][1] + 53)
+            try:
+                pyautogui.moveTo(self.matrix[self.cursorPosition_x][self.cursorPosition_y]['second'][0] + 10, self.matrix[self.cursorPosition_x][self.cursorPosition_y]['second'][1] + 53)
+            except:
+                pyautogui.moveTo(10, 53)
+                self.cursorPosition_x = 0
+                self.cursorPosition_y = 0
             self.ok = False
         cv2.imshow('window', new_screen)   
         
