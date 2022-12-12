@@ -2,6 +2,7 @@ import numpy as np
 from PIL import ImageGrab
 import time
 import cv2
+import keyboard
 import pyautogui
 
 base = 'img/'
@@ -63,11 +64,9 @@ matrix = np.zeros((8, 8), dtype=object)
 
 def map_cells_to_matrix(point, value):
     x, y = point
-    # x = x + 7
-    # y = y + 7
     interpolated_x = np.interp(x, [10,122], [0,7])
     interpolated_y = np.interp(y, [53,165], [0,7])
-    matrix[round(interpolated_y)][round(interpolated_x)] = {'first': value, 'second': (x, y), 'third': (round(interpolated_x), round(interpolated_y))}
+    matrix[round(interpolated_y)][round(interpolated_x)] = {'first': value, 'second': (x + 7, y  + 7), 'third': (round(interpolated_x), round(interpolated_y))}
     # print("x: {}, y: {}, x_i: {}, y_i: {}, val: {}".format(x, y, interpolated_x, interpolated_y, value))
 
 def take_screen_shot():
@@ -91,17 +90,43 @@ def process_img(original_image):
                 map_cells_to_matrix((pt), number['third'])
     return processed_img
 
+
 def main():
     last_time = time.time()
+    ok = True
     while(True):
         screen = take_screen_shot()
         new_screen = process_img(screen)
-        print('Loop took {} seconds'.format(time.time()-last_time))
+        # print('Loop took {} seconds'.format(time.time()-last_time))
         last_time = time.time()
+        if(ok):
+            cursorPosition_x = 0
+            cursorPosition_y = 0
+            pyautogui.moveTo(matrix[cursorPosition_x][cursorPosition_y]['second'][0] + 10, matrix[cursorPosition_x][cursorPosition_y]['second'][1] + 53)
+            ok = False
         cv2.imshow('window', new_screen)
         if cv2.waitKey(25) & 0xFF == ord('q'):
             cv2.destroyAllWindows()
             break
+        
+        if keyboard.is_pressed('w'):
+            if(cursorPosition_x > 0):
+                cursorPosition_x -= 1
+                pyautogui.moveTo(matrix[cursorPosition_x][cursorPosition_y]['second'][0] + 10, matrix[cursorPosition_x][cursorPosition_y]['second'][1] + 53)
+        elif keyboard.is_pressed('a'):
+            if(cursorPosition_y > 0):
+                cursorPosition_y -= 1
+                pyautogui.moveTo(matrix[cursorPosition_x][cursorPosition_y]['second'][0] + 10, matrix[cursorPosition_x][cursorPosition_y]['second'][1] + 53)
+        elif keyboard.is_pressed('s'):
+            if(cursorPosition_x < 7):
+                cursorPosition_x += 1
+                pyautogui.moveTo(matrix[cursorPosition_x][cursorPosition_y]['second'][0] + 10, matrix[cursorPosition_x][cursorPosition_y]['second'][1] + 53)
+        elif keyboard.is_pressed('d'):
+            if(cursorPosition_y < 7):
+                cursorPosition_y += 1
+                pyautogui.moveTo(matrix[cursorPosition_x][cursorPosition_y]['second'][0] + 10, matrix[cursorPosition_x][cursorPosition_y]['second'][1] + 53)
+        elif keyboard.is_pressed('space'):
+            pyautogui.click()
 
 if __name__ == '__main__':
     main()
