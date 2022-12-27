@@ -26,36 +26,46 @@ class Minesweeper:
                 'third': 3,
             },
             4: {
+                'first': '4.png',
+                'second': (255, 0, 0),
+                'third': 4,
+            },
+            5: {
+                'first': '5.png',
+                'second': (255, 0, 0),
+                'third': 5,
+            },
+            6: {
                 'first': 'cell.png',
                 'second': (0, 0, 0),
                 'third': 0,
             },
-            5: {
+            7: {
                 'first': 'empty_down.png',
                 'second': (0, 255, 255),
                 'third': -1,
             },
-            6: {
+            8: {
                 'first': 'empty.png',
                 'second': (0, 255, 255),
                 'third': -1,
             },
-            7: {
+            9: {
                 'first': 'empty_right.png',
                 'second': (0, 255, 255),
                 'third': -1,
             },
-            8: {
+            10: {
                 'first': 'empty_corner.png',
                 'second': (0, 255, 255),
                 'third': -1,
             },
-            9: {
+            11: {
                 'first': 'happy.png',
                 'second': (0, 255, 255),
                 'third': '9'
             },
-            10: {
+            12: {
                 'first': 'sad.png',
                 'second': (255, 0, 255),
                 'third': '-9'
@@ -67,8 +77,16 @@ class Minesweeper:
         self.cursorPosition_x = 0
         self.cursorPosition_y = 0
         self.score = 0
+        self.game_over = False
         self.main()
 
+    def count_score(self, the_matrix):
+        score = 0
+        for row in the_matrix:
+            for cell in row:
+                if(cell['first'] == 0):
+                    score += 1
+        return score
 
     def map_cells_to_matrix(self, point, value):
         x, y = point
@@ -100,14 +118,17 @@ class Minesweeper:
                 cv2.rectangle(processed_img, (pt[0] + xOffset, pt[1] + yOffset), (pt[0] + w - xOffset - 1, pt[1] + h - yOffset - 1), number['second'])
                 if(number['first'] != 'happy.png' and number['first'] != 'sad.png'):
                     self.map_cells_to_matrix((pt), number['third'])
-                    self.score += 1
+                elif(number['first'] == 'happy.png'):
+                    self.game_over = False
                 elif(number['first'] == 'sad.png'):
-                    self.score = 0
+                    # self.score = 0
                     self.reset_point = pt
-                    self.reset_game()
+                    self.game_over = True
+                    # self.reset_game()
         return processed_img
 
     def move_cursor(self, direction):
+        saved_score = self.score
         reward = 0
         check_game_over = False
         if direction == [1, 0, 0, 0, 0]:
@@ -128,16 +149,21 @@ class Minesweeper:
                 pyautogui.moveTo(self.matrix[self.cursorPosition_x][self.cursorPosition_y]['second'][0] + 10, self.matrix[self.cursorPosition_x][self.cursorPosition_y]['second'][1] + 53)
         elif direction == [0, 0, 0, 0, 1]:
             pyautogui.click()
-            check_game_over = self.matrix[self.cursorPosition_x][self.cursorPosition_y]['first'] == -9
+            check_game_over = self.game_over == True
             if(check_game_over):
-                reward = -10
+                reward = -20
                 print('game over')
+                saved_score = self.score
                 self.score = 0
                 self.reset_game()
             elif(self.matrix[self.cursorPosition_x][self.cursorPosition_y]['first'] == 0):
-                print('good choice')
+                self.score = 64 - self.count_score(self.matrix)
+                saved_score = self.score
+                print('good choice | {} | x: {} | y:{}'.format(self.matrix[self.cursorPosition_x][self.cursorPosition_y]['first'], self.cursorPosition_x, self.cursorPosition_y))
                 reward = 10
-        return reward, check_game_over, self.score
+        # print('Reward: {} | Score: {}'.format(reward, self.score))
+        # print('Score: {}'.format(saved_score))
+        return reward, check_game_over, saved_score
 
     def main(self):
         # while(True):
