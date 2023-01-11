@@ -1,2 +1,2 @@
 # MinesweeperML
-Machine Learning Minesweeper
+Learning Machine Learning by trying to win a Minesweeper game
