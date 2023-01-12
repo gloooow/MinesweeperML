@@ -16,6 +16,8 @@ class Minesweeper:
         self.x_directions = [-1,0,1,-1,1,-1,0,1]
         self.y_directions = [-1,-1,-1,0,0,1,1,1]
 
+        self.continue_game = True
+
         self.cells = {
             1: { # one - blue
                 'corner': [192, 192, 192],
@@ -87,8 +89,7 @@ class Minesweeper:
                     if((cornerPixel == value['corner']).all() and (midPixel == value['mid']).all()):
                         self.matrix[j][i] = value['value']
                         break
-    def surely_flag(self):
-        ok = False
+    def check_flag(self):
         for i in range(1, 9):
             for j in range(1, 9):
                 empty_cells = 0
@@ -96,9 +97,8 @@ class Minesweeper:
                 for d in range(8):
                     dir_x = i + self.x_directions[d]
                     dir_y = j + self.y_directions[d]
-                    if(self.matrix[i][j] != 0 and self.matrix[dir_x][dir_y] == 0):
+                    if(self.matrix[i][j] != 0 and (self.matrix[dir_x][dir_y] == 0 or self.matrix[dir_x][dir_y] == 'f')):
                         empty_cells += 1
-                        ok = True
                         flag_coordinates.append([dir_x, dir_y])
                 if(empty_cells == self.matrix[i][j] and empty_cells != 0):
                     for flags in flag_coordinates:
@@ -109,7 +109,6 @@ class Minesweeper:
             for j in range(1, 9):
                 if(self.matrix_aux[i][j] == 'f'):
                         pyautogui.rightClick(self.cornerPixel['x'] + ((j - 1) * self.cornerDistance), self.cornerPixel['y'] + ((i - 1) * self.cornerDistance))
-        return ok
         
     def transfer_flag_matrix(self):
         for i in range(1, 9):
@@ -117,24 +116,37 @@ class Minesweeper:
                 if(self.matrix_aux[i][j] == 'f'):
                     self.matrix[i][j] = 'f'
                     self.matrix_aux[i][j] = 0
+    def click_sure_cell(self):
+        for i in range(1, 9):
+            for j in range(1, 9):
+                if(self.matrix[i][j] != 0):
+                    flag_cells = 0
+                    empty_cell_coordinates = []
+                    for d in range(8):
+                        dir_x = i + self.x_directions[d]
+                        dir_y = j + self.y_directions[d]
+                        if(self.matrix[dir_x][dir_y] == 0):
+                            empty_cell_coordinates.append([dir_x, dir_y])
+                        elif(self.matrix[dir_x][dir_y] == 'f'):
+                            flag_cells += 1
+                    if(flag_cells == self.matrix[i][j]):
+                        for empty_cell in empty_cell_coordinates:
+                            pyautogui.leftClick(self.cornerPixel['x'] + ((empty_cell[1] - 1) * self.cornerDistance), self.cornerPixel['y'] + ((empty_cell[0] - 1) * self.cornerDistance))
+
+
     def main(self):
         self.init_matrix_border()
-        while(True):
+        while(self.continue_game):
+            start_time = time.time()
             image = self.take_screen_shot()
             self.identify_cell(image)
-            self.surely_flag()
+            self.check_flag()
             self.transfer_flag_matrix()
-            break
+            self.click_sure_cell()
+            print("took --- %s seconds ---" % (time.time() - start_time))
 
 if __name__ == '__main__':
     minesweeper = Minesweeper()
     start_time = time.time()
     minesweeper.main()
     print("--- %s seconds ---" % (time.time() - start_time))
-
-
-# ML care sa invete ca trebuie sa apese doar pe 0
-# inainte sa apese pe celula 0, sa se uite in jurul ei si sa vada daca e o idee buna sa apese acolo sau nu
-# daca nu e idee buna, pune steag
-# trb sa vad algoritm prin care sa determine daca e o idee buna sa apese pe 0 sau nu
-# adica cumva trebuie sa stie ca daca are anumite chestii in jur, sa nu apese pe 0 ci sa puna steag
