@@ -166,8 +166,11 @@ if __name__ == '__main__':
     print("--- %s seconds ---" % (time.time() - start_time))
 
 
-# while(True):
-#     print(pyautogui.position())
-#     time.sleep(1)
+# 3 actions
+# - click on a cell
+# - right click on a cell
+# - do nothing
 
-# pyautogui.moveTo(146, 231)
+# states
+# - current cell
+# - current cell's neighbors
