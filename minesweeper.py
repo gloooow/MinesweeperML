@@ -9,8 +9,17 @@ class Minesweeper:
         self.cornerPixel = {'x': 16, 'y': 102}
         self.midPiel = {'x': 23, 'y': 109}
         self.cornerDistance = 16
-        self.matrix = np.zeros((10, 10), dtype=object)
-        self.matrix_aux = np.zeros((10, 10), dtype=object)
+        
+        # 8 - easy
+        # 16 - medium
+        self.difficulty = 16
+        # 146, 231 - easy
+        # 274, 360 - medium
+        self.corner_x = 274
+        self.corner_y = 360
+
+        self.matrix = np.zeros((self.difficulty + 2, self.difficulty + 2), dtype=object)
+        self.matrix_aux = np.zeros((self.difficulty + 2, self.difficulty + 2), dtype=object)
         self.base = 'img/'
 
         self.x_directions = [-1,0,1,-1,1,-1,0,1]
@@ -66,19 +75,19 @@ class Minesweeper:
             },
         }
     def init_matrix_border(self):
-        for i in range(10):
+        for i in range(self.difficulty + 2):
             self.matrix[0][i], self.matrix_aux[0][i] = 'o','o'
-            self.matrix[9][i], self.matrix_aux[9][i] = 'o','o'
+            self.matrix[self.difficulty + 1][i], self.matrix_aux[self.difficulty + 1][i] = 'o','o'
             self.matrix[i][0], self.matrix_aux[i][0] = 'o','o'
-            self.matrix[i][9], self.matrix_aux[i][9] = 'o','o'
+            self.matrix[i][self.difficulty + 1], self.matrix_aux[i][self.difficulty + 1] = 'o','o'
         
     def take_screen_shot(self):
-        return cv2.cvtColor(np.array(ImageGrab.grab(bbox=(0,0,146,231))), cv2.COLOR_BGR2RGB)
+        return cv2.cvtColor(np.array(ImageGrab.grab(bbox=(0,0,self.corner_x,self.corner_y))), cv2.COLOR_BGR2RGB)
 
     def identify_cell(self, image):
         currentMouseX_corner, currentMouseY_corner, currentMouseX_mid, currentMouseY_mid = 0, 0, 0, 0
-        for i in range(1, 9):
-            for j in range(1, 9):
+        for i in range(1, self.difficulty + 1):
+            for j in range(1, self.difficulty + 1):
                 currentMouseX_corner = 16 + ((i - 1) * 16)
                 currentMouseY_corner = 102 + ((j - 1) * 16)
                 currentMouseX_mid = 23 + ((i - 1) * 16)
@@ -90,8 +99,8 @@ class Minesweeper:
                         self.matrix[j][i] = value['value']
                         break
     def check_flag(self):
-        for i in range(1, 9):
-            for j in range(1, 9):
+        for i in range(1, self.difficulty + 1):
+            for j in range(1, self.difficulty + 1):
                 empty_cells = 0
                 flag_coordinates = []
                 for d in range(8):
@@ -105,20 +114,21 @@ class Minesweeper:
                         if(self.matrix[flags[0]][flags[1]] == 0):
                             self.matrix_aux[flags[0]][flags[1]] = 'f'
         
-        for i in range(1, 9):
-            for j in range(1, 9):
+        for i in range(1, self.difficulty + 1):
+            for j in range(1, self.difficulty + 1):
                 if(self.matrix_aux[i][j] == 'f'):
+                        self.continue_game = True
                         pyautogui.rightClick(self.cornerPixel['x'] + ((j - 1) * self.cornerDistance), self.cornerPixel['y'] + ((i - 1) * self.cornerDistance))
         
     def transfer_flag_matrix(self):
-        for i in range(1, 9):
-            for j in range(1, 9):
+        for i in range(1, self.difficulty + 1):
+            for j in range(1, self.difficulty + 1):
                 if(self.matrix_aux[i][j] == 'f'):
                     self.matrix[i][j] = 'f'
                     self.matrix_aux[i][j] = 0
     def click_sure_cell(self):
-        for i in range(1, 9):
-            for j in range(1, 9):
+        for i in range(1, self.difficulty + 1):
+            for j in range(1, self.difficulty + 1):
                 if(self.matrix[i][j] != 0):
                     flag_cells = 0
                     empty_cell_coordinates = []
@@ -130,13 +140,16 @@ class Minesweeper:
                         elif(self.matrix[dir_x][dir_y] == 'f'):
                             flag_cells += 1
                     if(flag_cells == self.matrix[i][j]):
+                        
                         for empty_cell in empty_cell_coordinates:
+                            self.continue_game = True
                             pyautogui.leftClick(self.cornerPixel['x'] + ((empty_cell[1] - 1) * self.cornerDistance), self.cornerPixel['y'] + ((empty_cell[0] - 1) * self.cornerDistance))
 
 
     def main(self):
         self.init_matrix_border()
         while(self.continue_game):
+            self.continue_game = False
             start_time = time.time()
             image = self.take_screen_shot()
             self.identify_cell(image)
@@ -144,9 +157,17 @@ class Minesweeper:
             self.transfer_flag_matrix()
             self.click_sure_cell()
             print("took --- %s seconds ---" % (time.time() - start_time))
+        return "finished"
 
 if __name__ == '__main__':
     minesweeper = Minesweeper()
     start_time = time.time()
-    minesweeper.main()
+    print(minesweeper.main())
     print("--- %s seconds ---" % (time.time() - start_time))
+
+
+# while(True):
+#     print(pyautogui.position())
+#     time.sleep(1)
+
+# pyautogui.moveTo(146, 231)
